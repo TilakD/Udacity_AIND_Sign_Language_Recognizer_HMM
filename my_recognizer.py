@@ -21,5 +21,16 @@ def recognize(models: dict, test_set: SinglesData):
     probabilities = []
     guesses = []
     # TODO implement the recognizer
+    for idx in test_set.get_all_Xlengths():
+        X, lengths = test_set.get_item_Xlengths(idx)
+        probability = {}
+        for word, model in models.items():
+            try:
+                probability[word] = model.score(X, lengths)
+            except:
+                probability[word] = float('-inf')
+        probabilities.append(probability)
+        guesses.append(max(probability, key=probability.get ))
+    
     # return probabilities, guesses
-    raise NotImplementedError
+    return probabilities, guesses
