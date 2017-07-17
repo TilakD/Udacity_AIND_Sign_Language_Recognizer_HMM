@@ -83,8 +83,10 @@ class SelectorBIC(ModelSelector):
             try:
                 model = self.base_model(n_components)
                 p = (n_components ** 2) + 2 * len(self.X[0]) * n_components - 1
+                logL = model.score(self.X, self.lengths)
                 N = np.sum(self.lengths)
-                score = -2 * model.score(self.X, self.lengths) + p * np.log(N)
+                #BIC = -2 * logL + p * logN
+                score = -2 * logL + p * np.log(N)
                 if score < best_score:
                     best_score = score
                     best_model = model
@@ -106,7 +108,29 @@ class SelectorDIC(ModelSelector):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
         # TODO implement model selection based on DIC scores
-        raise NotImplementedError
+        best_score = -float("inf")
+        best_model = None
+        for n_components in range(self.min_n_components, self.max_n_components + 1):
+            score_other = 0
+            try:
+                model = self.base_model(n_components)
+                score = model.score(self.X, self.lengths) 
+                other_words = self.words.copy()
+                del other_words[self.this_word] #excluding current word
+                for word in other_words:
+                    otherX, otherlength = self.hwords[word]
+                    try:
+                        score_other += model.score(otherX, otherlength)
+                    except:
+                        pass
+                score_other = score_other / len(other_words)
+                DIC_score = score - score_other
+                if DIC_score > best_score:
+                    best_score = DIC_score
+                    best_model = model
+            except:
+                pass
+        return best_model
 
 
 class SelectorCV(ModelSelector):
